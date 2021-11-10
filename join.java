@@ -17,22 +17,25 @@ public class join {
         String b_key_name;
         String join_type;
         String o_filename;
-        if (args.length == 6) {
+        String mode;
+        if (args.length == 7) {
             a_filename = args[0];
             a_key_name = args[1];
             b_filename = args[2];
             b_key_name = args[3];
             join_type = args[4];
             o_filename = args[5];
+            mode = args[6];
         }
         else {
-            // System.out.println("Invalid argument(s)");
+            System.out.println("Invalid argument(s), returning to default");
             a_filename = "nation.tbl";
             a_key_name = "REGIONKEY";
             b_filename = "region.tbl";
             b_key_name = "REGIONKEY";
             join_type = "NESTED_LOOP";
             o_filename = "output.tbl";
+            mode = "NORMAL";
             // return;
         }
         // LOAD LEFT TABLE
@@ -48,8 +51,10 @@ public class join {
                 count ++;
             }
             while((line = br.readLine()) != null) {
-                String[] values = line.split("\\|");
-                a_records.add(Arrays.asList(values));
+                if (mode.equals("NORMAL") || hash_pass(line)) {
+                    String[] values = line.split("\\|");
+                    a_records.add(Arrays.asList(values));
+                }
             }
         }          
 
@@ -66,8 +71,10 @@ public class join {
                 count ++;
             }
             while((line = br.readLine()) != null) {
-                String[] values = line.split("\\|");
-                b_records.add(Arrays.asList(values));
+                if (mode.equals("NORMAL") || hash_pass(line)) {
+                    String[] values = line.split("\\|");
+                    b_records.add(Arrays.asList(values));
+                }
             }
         }
 
@@ -155,5 +162,12 @@ public class join {
         // OUTPUT BENCHMARK RESULT
         long duration_micro = (end_time - start_time) / 1000;
         System.out.println(String.format("Process complete, %d microseconds taken",duration_micro));
+    }
+
+    private static double BENCHMARK_RATIO = 0.05;
+    private static double INTEGER_RANGE = 1L << 32;
+    private static boolean hash_pass(String line) {
+        double doubleHash = ((long) line.hashCode() - Integer.MIN_VALUE) / INTEGER_RANGE;
+        return doubleHash < BENCHMARK_RATIO;
     }
 }
